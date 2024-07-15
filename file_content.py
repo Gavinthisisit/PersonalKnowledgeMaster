@@ -105,7 +105,7 @@ class LocalFile:
             loader = UnstructuredEmailLoader(self.file_path, mode="elements")
             docs = loader.load()
         elif self.file_path.lower().endswith(".csv"):
-            loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'})
+            loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'}, encoding='utf8')
             docs = loader.load()
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
@@ -134,7 +134,7 @@ class LocalFile:
         self.embs = self.emb_infer._get_len_safe_embeddings([doc.page_content for doc in self.docs])
 
 if __name__ == '__main__':
-    file = LocalFile('./china_2185.txt', "123", False)
+    file = LocalFile('./test.csv', "123", False)
     file.split_file_to_docs()
     print(len(file.docs))
-    print(file.docs[101])
+    print(file.docs[1])
