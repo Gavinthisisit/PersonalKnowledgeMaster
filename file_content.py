@@ -10,6 +10,9 @@ from langchain_community.document_loaders import UnstructuredWordDocumentLoader
 from langchain_community.document_loaders import UnstructuredEmailLoader
 from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from csv_loader import CSVLoader
+from pdf_loader import load_pdf
+from xls_loader import load_xls
+from pptx_loader import load_pptx
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # from qanything_kernel.utils.custom_log import debug_logger, qa_logger
 from chinese_text_splitter import ChineseTextSplitter,TextSplitter
@@ -78,7 +81,9 @@ class LocalFile:
             # loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine)
             # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
             # docs = loader.load_and_split(texts_splitter)
-            pass
+            text_content = load_pdf(self.file_path)
+            texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+            texts = texts_splitter.split_text(text_content)
         elif self.file_path.lower().endswith(".jpg") or self.file_path.lower().endswith(
                 ".png") or self.file_path.lower().endswith(".jpeg"):
             loader = UnstructuredPaddleImageLoader(self.file_path, mode="elements")
@@ -93,18 +98,23 @@ class LocalFile:
             texts = texts_splitter.split_text(text_content)
         elif self.file_path.lower().endswith(".xlsx"):
             # loader = UnstructuredExcelLoader(self.file_path, mode="elements")
-            docs = []
+            texts = []
             xlsx = pd.read_excel(self.file_path, engine='openpyxl', sheet_name=None)
             for sheet in xlsx.keys():
                 df = xlsx[sheet]
                 df.dropna(how='all', inplace=True)
                 csv_file_path = self.file_path[:-5] + '_' + sheet + '.csv'
                 df.to_csv(csv_file_path, index=False)
-                loader = CSVLoader(csv_file_path, csv_args={"delimiter": ",", "quotechar": '"'})
-                docs += loader.load()
+                loader = CSVLoader(csv_file_path, csv_args={"delimiter": ",", "quotechar": '"'}, autodetect_encoding=True)
+                text_content = loader.load()
+                texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+                texts += texts_splitter.split_text(text_content)
         elif self.file_path.lower().endswith(".pptx"):
-            loader = UnstructuredPowerPointLoader(self.file_path, mode="elements")
-            docs = loader.load()
+            # loader = UnstructuredPowerPointLoader(self.file_path, mode="elements")
+            # docs = loader.load()
+            text_content = load_pptx(self.file_path)
+            texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+            texts = texts_splitter.split_text(text_content)
         elif self.file_path.lower().endswith(".eml"):
             loader = UnstructuredEmailLoader(self.file_path, mode="elements")
             docs = loader.load()
@@ -113,8 +123,12 @@ class LocalFile:
             text_content = loader.load()
             texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
             texts = texts_splitter.split_text(text_content)
+        elif self.file_path.lower().endswith(".xls"):
+            text_content = load_xls(self.file_path)
+            texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+            texts = texts_splitter.split_text(text_content)
         else:
-            raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
+            raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xls,xlsx,pptx,eml,csv]")
         if using_zh_title_enhance:
             print("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
@@ -132,7 +146,7 @@ class LocalFile:
             tmp_obj = {"content": text, "metadata": metadata}
             # doc = Document(page_content=text, metadata=metadata)
             docs.append(tmp_obj)
-        # # 这里给每个docs片段的metadata里注入file_id
+        # 这里给每个docs片段的metadata里注入file_id
         # for doc in docs:
         #     doc.metadata["file_id"] = self.file_id
         #     doc.metadata["file_name"] = self.url if self.url else os.path.split(self.file_path)[-1]
@@ -150,7 +164,7 @@ class LocalFile:
 if __name__ == '__main__':
     # file = LocalFile('./2024.07.11九方会议纪要.docx', "123", False)
     # file = LocalFile('./china_2185.txt', "123", False)
-    file = LocalFile('./test.csv', "123", False)
+    file = LocalFile('./2022年度述职PPT-资金清算处.pptx', "123", False)
     file.split_file_to_docs()
     print(len(file.docs))
-    print(file.docs[5])
+    print(file.docs[2])
