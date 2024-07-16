@@ -57,7 +57,7 @@ class CSVLoader(BaseLoader):
         self.csv_args = csv_args or {}
         self.autodetect_encoding = autodetect_encoding
 
-    def load(self) -> List[Document]:
+    def load(self) -> str:
         """Load data into document objects."""
 
         docs = []
@@ -83,8 +83,9 @@ class CSVLoader(BaseLoader):
 
         return docs
 
-    def __read_file(self, csvfile: TextIOWrapper) -> List[Document]:
+    def __read_file(self, csvfile: TextIOWrapper) -> str:
         docs = []
+        content = ""
         csv_reader = csv.DictReader(csvfile, **self.csv_args)  # type: ignore
         # 初始化一个字典，用于存储每一列最后一次的非空值
         last_non_empty_values = {}
@@ -104,25 +105,25 @@ class CSVLoader(BaseLoader):
             for k, v in row.items():
                 if k in self.metadata_columns:
                     continue
+                # print(f"{k.strip()}: {v.strip() if v else last_non_empty_values.get(k, v)}")
                 line_contents.append(f"{k.strip()}: {v.strip() if v else last_non_empty_values.get(k, v)}")
                 if v:
+                    # print("v" , v)
                     last_non_empty_values[k] = v
-            content = '------------------------\n'
             # content += " & ".join(
             #     f"{k.strip()}: {v.strip() if v is not None else v}"
             #     for k, v in row.items()
             #     if k not in self.metadata_columns
             # )
-            content += ' & '.join(line_contents)
-            content += '\n------------------------'
+            content += '\t'.join(line_contents) + "\n"
 
-            metadata = {"source": source, "row": i}
-            for col in self.metadata_columns:
-                try:
-                    metadata[col] = row[col]
-                except KeyError:
-                    raise ValueError(f"Metadata column '{col}' not found in CSV file.")
-            doc = Document(page_content=content, metadata=metadata)
-            docs.append(doc)
+        # metadata = {"source": source, "row": i}
+        # for col in self.metadata_columns:
+        #     try:
+        #         metadata[col] = row[col]
+        #     except KeyError:
+        #         raise ValueError(f"Metadata column '{col}' not found in CSV file.")
+        # doc = Document(page_content=content, metadata=metadata)
+        # docs.append(doc)
 
-        return docs
+        return content

@@ -1,7 +1,7 @@
 # from qanything_kernel.utils.general_utils import *
 from typing import List, Union, Callable
 from model_config import UPLOAD_ROOT_PATH, SENTENCE_SIZE, ZH_TITLE_ENHANCE
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 # from qanything_kernel.utils.loader.my_recursive_url_loader import MyRecursiveUrlLoader
 # from langchain.document_loaders import UnstructuredFileLoader, TextLoader
 from langchain_community.document_loaders import UnstructuredFileLoader, TextLoader
@@ -12,7 +12,7 @@ from langchain_community.document_loaders import UnstructuredPowerPointLoader
 from csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # from qanything_kernel.utils.custom_log import debug_logger, qa_logger
-from chinese_text_splitter import ChineseTextSplitter
+from chinese_text_splitter import ChineseTextSplitter,TextSplitter
 from image_loader import UnstructuredPaddleImageLoader
 # from pdf_loader import UnstructuredPaddlePDFLoader
 from ZhTitleEnhance import zh_title_enhance
@@ -20,6 +20,7 @@ from sanic.request import File
 import pandas as pd
 import os
 from general_utils import *
+from file_utils import *
 
 text_splitter = RecursiveCharacterTextSplitter(
     separators=["\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
@@ -70,9 +71,9 @@ class LocalFile:
             loader = UnstructuredFileLoader(self.file_path, mode="elements")
             docs = loader.load()
         elif self.file_path.lower().endswith(".txt"):
-            loader = TextLoader(self.file_path, autodetect_encoding=True)
-            texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
-            docs = loader.load_and_split(texts_splitter)
+            text_content = load_txt(self.file_path)
+            texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+            texts = texts_splitter.split_text(text_content)
         elif self.file_path.lower().endswith(".pdf"):
             # loader = UnstructuredPaddlePDFLoader(self.file_path, ocr_engine)
             # texts_splitter = ChineseTextSplitter(pdf=True, sentence_size=sentence_size)
@@ -84,9 +85,12 @@ class LocalFile:
             texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
             docs = loader.load_and_split(text_splitter=texts_splitter)
         elif self.file_path.lower().endswith(".docx"):
-            loader = UnstructuredWordDocumentLoader(self.file_path, mode="elements")
-            texts_splitter = ChineseTextSplitter(pdf=False, sentence_size=sentence_size)
-            docs = loader.load_and_split(texts_splitter)
+            # loader = UnstructuredWordDocumentLoader(self.file_path, mode="elements")
+            # print(loader)
+            # docs = loader.load_and_split(texts_splitter)
+            text_content = load_docx(self.file_path)
+            texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+            texts = texts_splitter.split_text(text_content)
         elif self.file_path.lower().endswith(".xlsx"):
             # loader = UnstructuredExcelLoader(self.file_path, mode="elements")
             docs = []
@@ -106,7 +110,9 @@ class LocalFile:
             docs = loader.load()
         elif self.file_path.lower().endswith(".csv"):
             loader = CSVLoader(self.file_path, csv_args={"delimiter": ",", "quotechar": '"'}, encoding='utf8')
-            docs = loader.load()
+            text_content = loader.load()
+            texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+            texts = texts_splitter.split_text(text_content)
         else:
             raise TypeError("文件类型不支持，目前仅支持：[md,txt,pdf,jpg,png,jpeg,docx,xlsx,pptx,eml,csv]")
         if using_zh_title_enhance:
@@ -119,13 +125,21 @@ class LocalFile:
         # docs = text_splitter.split_documents(docs)
         # print(f"after 2nd split doc lens: {len(docs)}")
 
-        # 这里给每个docs片段的metadata里注入file_id
-        for doc in docs:
-            doc.metadata["file_id"] = self.file_id
-            doc.metadata["file_name"] = self.url if self.url else os.path.split(self.file_path)[-1]
-        write_check_file(self.file_path, docs)
+        # 这里开始构造chunk对象d
+        docs = []
+        metadata={'source': self.file_path, 'file_id': self.file_id, 'file_name': self.url if self.url else os.path.split(self.file_path)[-1]}
+        for text in texts:
+            tmp_obj = {"content": text, "metadata": metadata}
+            # doc = Document(page_content=text, metadata=metadata)
+            docs.append(tmp_obj)
+        # # 这里给每个docs片段的metadata里注入file_id
+        # for doc in docs:
+        #     doc.metadata["file_id"] = self.file_id
+        #     doc.metadata["file_name"] = self.url if self.url else os.path.split(self.file_path)[-1]
+        
+        # write_check_file(self.file_path, docs)
         if docs:
-            print('langchain analysis content head: %s', docs[0].page_content[:100])
+            print('langchain analysis content head: %s', docs[0])
         else:
             print('langchain analysis docs is empty!')
         self.docs = docs
@@ -134,7 +148,9 @@ class LocalFile:
         self.embs = self.emb_infer._get_len_safe_embeddings([doc.page_content for doc in self.docs])
 
 if __name__ == '__main__':
+    # file = LocalFile('./2024.07.11九方会议纪要.docx', "123", False)
+    # file = LocalFile('./china_2185.txt', "123", False)
     file = LocalFile('./test.csv', "123", False)
     file.split_file_to_docs()
     print(len(file.docs))
-    print(file.docs[1])
+    print(file.docs[5])
