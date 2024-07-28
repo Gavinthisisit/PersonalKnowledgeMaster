@@ -24,6 +24,7 @@ import pandas as pd
 import os
 from general_utils import *
 from file_utils import *
+from embedding_model import get_embeddings
 
 text_splitter = RecursiveCharacterTextSplitter(
     separators=["\n", ".", "。", "!", "！", "?", "？", "；", ";", "……", "…", "、", "，", ",", " "],
@@ -168,3 +169,8 @@ if __name__ == '__main__':
     file.split_file_to_docs()
     print(len(file.docs))
     print(file.docs[2])
+    content = file.docs[2]["content"]
+    query = "债转股支付小工具"
+    embeds = get_embeddings([content, query])
+    sim = embeds[0] @ embeds[1].T
+    print(sim)
