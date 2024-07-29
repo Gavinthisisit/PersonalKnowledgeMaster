@@ -1,6 +1,7 @@
 from llama_index.core import ServiceContext, VectorStoreIndex, StorageContext, load_index_from_storage
 from llama_index.core import Document
 from typing import Dict, List, Optional, Sequence
+import os
 
 class KnowledgeDataBase:
     def __init__(self, persist_dir, similarity_top_k=5):

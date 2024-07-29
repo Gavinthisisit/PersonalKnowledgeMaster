@@ -63,8 +63,6 @@ class FileLoader:
         #         f.write(self.file_content)
         print(f'success init localfile {self.file_path}')
 
-    def 
-
     def split_file_to_docs(self, sentence_size=SENTENCE_SIZE,
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
         if self.url != "":

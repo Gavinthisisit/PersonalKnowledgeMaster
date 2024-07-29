@@ -9,7 +9,7 @@ class Controller:
     
     def add_file(self, filename):
         ##check mysql
-        if is_file_stored(filename):
+        if self.is_file_stored(filename):
             print("file has been stored!PASS")
             return 
         new_file = FileLoader(filename, self.user_id, False)
