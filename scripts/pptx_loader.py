@@ -29,4 +29,4 @@ def load_pptx(filename):
     return retval
 
 
-load_pptx("./2022年度述职PPT-资金清算处.pptx")
+# load_pptx("./2022年度述职PPT-资金清算处.pptx")

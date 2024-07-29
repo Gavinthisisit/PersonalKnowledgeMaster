@@ -1,10 +1,10 @@
-from docx import Document
+from docx import Document as Doc
 import chardet
 
  
 def load_docx(filename):
     # 加载一个已经存在的文档
-    doc = Document(filename)
+    doc = Doc(filename)
      
     # 遍历文档中的所有段落并打印它们的内容
     content = ""

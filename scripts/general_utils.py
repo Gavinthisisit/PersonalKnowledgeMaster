@@ -1,12 +1,13 @@
-from sanic.request import Request
-from sanic.exceptions import BadRequest
+# from sanic.request import Request
+# from sanic.exceptions import BadRequest
 import traceback
 from urllib.parse import urlparse
 import time
 import os
 import logging
 import re
-import tiktoken
+import hashlib
+# import tiktoken
 
 __all__ = ['write_check_file', 'isURL', 'format_source_documents', 'get_time', 'safe_get', 'truncate_filename',
            'read_files_with_extensions', 'validate_user_id', 'get_invalid_user_id_msg', 'num_tokens']
@@ -65,27 +66,27 @@ def get_time(func):
     return inner
 
 
-def safe_get(req: Request, attr: str, default=None):
-    try:
-        if attr in req.form:
-            return req.form.getlist(attr)[0]
-        if attr in req.args:
-            return req.args[attr]
-        if attr in req.json:
-            return req.json[attr]
-        # if value := req.form.get(attr):
-        #     return value
-        # if value := req.args.get(attr):
-        #     return value
-        # """req.json执行时不校验content-type，body字段可能不能被正确解析为json"""
-        # if value := req.json.get(attr):
-        #     return value
-    except BadRequest:
-        logging.warning(f"missing {attr} in request")
-    except Exception as e:
-        logging.warning(f"get {attr} from request failed:")
-        logging.warning(traceback.format_exc())
-    return default
+# def safe_get(req: Request, attr: str, default=None):
+#     try:
+#         if attr in req.form:
+#             return req.form.getlist(attr)[0]
+#         if attr in req.args:
+#             return req.args[attr]
+#         if attr in req.json:
+#             return req.json[attr]
+#         # if value := req.form.get(attr):
+#         #     return value
+#         # if value := req.args.get(attr):
+#         #     return value
+#         # """req.json执行时不校验content-type，body字段可能不能被正确解析为json"""
+#         # if value := req.json.get(attr):
+#         #     return value
+#     except BadRequest:
+#         logging.warning(f"missing {attr} in request")
+#     except Exception as e:
+#         logging.warning(f"get {attr} from request failed:")
+#         logging.warning(traceback.format_exc())
+#     return default
 
 
 def truncate_filename(filename, max_length=200):
@@ -147,3 +148,11 @@ def num_tokens(text: str, model: str = 'gpt-3.5-turbo-0613') -> int:
     """Return the number of tokens in a string."""
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(text))
+
+def gen_file_id(userid, filename):
+    info_str = userid + "_" + filename + '_' + time.strftime("%Y-%m-%d %X", time.localtime())
+    md5 = hashlib.md5()  # 创建一个md5对象
+    md5.update(info_str.encode('utf-8'))  # 使用utf-8编码消息
+    return md5.hexdigest()
+
+print(gen_file_id("123", "hahah"))

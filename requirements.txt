@@ -1,4 +1,10 @@
 langchain
+pymupdf
+xlrd
+chardet
+python-pptx
+opencv-python
+python-docx
 langchain_community
 opencv-python
 sanic==23.6.0
