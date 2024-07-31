@@ -1,5 +1,5 @@
-# from sanic.request import Request
-# from sanic.exceptions import BadRequest
+from sanic.request import Request
+from sanic.exceptions import BadRequest
 import traceback
 from urllib.parse import urlparse
 import time
@@ -66,27 +66,27 @@ def get_time(func):
     return inner
 
 
-# def safe_get(req: Request, attr: str, default=None):
-#     try:
-#         if attr in req.form:
-#             return req.form.getlist(attr)[0]
-#         if attr in req.args:
-#             return req.args[attr]
-#         if attr in req.json:
-#             return req.json[attr]
-#         # if value := req.form.get(attr):
-#         #     return value
-#         # if value := req.args.get(attr):
-#         #     return value
-#         # """req.json执行时不校验content-type，body字段可能不能被正确解析为json"""
-#         # if value := req.json.get(attr):
-#         #     return value
-#     except BadRequest:
-#         logging.warning(f"missing {attr} in request")
-#     except Exception as e:
-#         logging.warning(f"get {attr} from request failed:")
-#         logging.warning(traceback.format_exc())
-#     return default
+def safe_get(req: Request, attr: str, default=None):
+    try:
+        if attr in req.form:
+            return req.form.getlist(attr)[0]
+        if attr in req.args:
+            return req.args[attr]
+        if attr in req.json:
+            return req.json[attr]
+        # if value := req.form.get(attr):
+        #     return value
+        # if value := req.args.get(attr):
+        #     return value
+        # """req.json执行时不校验content-type，body字段可能不能被正确解析为json"""
+        # if value := req.json.get(attr):
+        #     return value
+    except BadRequest:
+        logging.warning(f"missing {attr} in request")
+    except Exception as e:
+        logging.warning(f"get {attr} from request failed:")
+        logging.warning(traceback.format_exc())
+    return default
 
 
 def truncate_filename(filename, max_length=200):

@@ -169,6 +169,20 @@ class FileLoader:
     # def create_embedding(self):
     #     self.embs = self.emb_infer._get_len_safe_embeddings([doc.page_content for doc in self.docs])
 
+    def split_content_to_docs(self, content):
+        texts_splitter = TextSplitter(pdf=False, sentence_size=sentence_size)
+        texts = texts_splitter.split_text(text_content)
+        # 这里开始构造chunk对象
+        metadata={'source': "raw_content", 'user_id': self.user_id}
+        for t in texts:
+            # tmp_obj = {"content": t, "metadata": metadata}
+            # docs.append(tmp_obj)
+            doc = Document(
+                text = t, 
+                metadata = metadata
+            )
+            self.docs.append(doc)
+        return
 if __name__ == '__main__':
     user_id = "test_userid"
     filename = "../data/清算部资金清算处2023年度工作总结 - 汇报版（更新数据）.docx"
