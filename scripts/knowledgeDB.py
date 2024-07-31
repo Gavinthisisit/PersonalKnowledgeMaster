@@ -13,11 +13,13 @@ class KnowledgeDataBase:
             self.db_index = load_index_from_storage(
                 StorageContext.from_defaults(persist_dir=self.persist_dir)
             )
-            self.retriever = self.db_index.as_retriever(self.similarity_top_k)
-        self.db_index = None
-        self.retriever = None
+            self.retriever = self.db_index.as_retriever(similarity_top_k=self.similarity_top_k)
+        else:
+            self.db_index = None
+            self.retriever = None
     
     def update_index(self, docs: Sequence[Document]):
+        print(len(docs))
         if self.db_index == None:
            # 初始化db_index
            # 定义你的服务上下文
@@ -32,7 +34,7 @@ class KnowledgeDataBase:
             for doc in docs:
                 self.db_index.insert(doc)
         ##更新retriever
-        self.retriever = self.db_index.as_retriever(self.similarity_top_k)
+        self.retriever = self.db_index.as_retriever(similarity_top_k=self.similarity_top_k)
 
     def search(self, query: str):
         if self.retriever == None:

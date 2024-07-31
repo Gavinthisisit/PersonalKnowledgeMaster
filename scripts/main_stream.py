@@ -37,6 +37,7 @@ r_content = ""
 while True:
     print("请输入您的指令(输入exit退出):")
     r_type, r_content = get_input()
+    print("req_type: ", r_type, "r_content: ", r_content)
     if r_type == "exit":
         sys.exit(0)
     if r_type == "file":
@@ -45,24 +46,28 @@ while True:
             print({'status': 'success', 'message': f'File {file.name} already dealed!'})
         else:
             dealed_map[file_path] = 1
-            contro.add_file(file_path)
+            contro.add_file(file_path, False)
             print({'status': 'success', 'message': f'File saved at {file_path}'})
-    else:
+    elif r_type == "content":
         content = r_content
         if general_utils.isURL(content):
+            print("this is url")
             key = user_id + "_" + content
             if key in dealed_map:
                     print({'status': 'success', 'message': f'url {content} already dealed!'})
             dealed_map[key] = 1
-            contro.add_file(content)
+            contro.add_file(content, True)
             print({'status': 'success', 'message': f'{content} saved!'})
         else:
             if len(content) < 100:
                 resp = contro.search(content)
+                print(resp.text)
                 print({'status': 'success', 'message': f'{resp}'})
             else:
                 contro.add_content(content)
                 print({'status': 'success', 'message': f'{content} saved!'})
+    else:
+        pass
 
 @app.post('/upload')
 async def upload_file(request):
