@@ -17,4 +17,3 @@ class Crawler:
             return ""
         plain_content = self.loader.get_content()
         return plain_content
-
