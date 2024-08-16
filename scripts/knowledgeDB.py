@@ -41,7 +41,7 @@ class KnowledgeDataBase:
             return None
         nodes = self.retriever.retrieve(query)
         if len(nodes) > 0:
-            return nodes[0]
+            return nodes[:5]
         else:
             return None
     

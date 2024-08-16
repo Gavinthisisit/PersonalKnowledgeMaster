@@ -49,14 +49,13 @@ class Controller:
         self.generate_info["content"] = content
         self.writeSqlite(self.generate_info)
 
-    ### 临时方案，检查文件是否重复上传
     def is_file_stored(self, filename):
         ##mysql
         search_map = {"userid":self.user_id, "file_path":filename}
         records = self.relation_db.read(search_map)
         if len(records) == 0:
-            return True
-        return False
+            return False
+        return True
 
     def gen_node_info(self, node: BaseNode):
         retval = {}
@@ -65,10 +64,15 @@ class Controller:
         retval["file_path"] = metadata["file_path"]
         fileid = metadata["file_id"]
         ### 从关系数据库查询abstract、快速阅读、label、modal
-        retval["abstract"] = "这是摘要内容..."
-        retval["quick_read"] = "这是快速阅读的内容..."
-        retval["label"] = "label1, label2, label3"
-        retval["modality"] = "模态"
+        search_map = {"userid": self.user_id, "fileid": fileid}
+        records = self.relation_db.read(search_map)
+        if len(records) != 1:
+            print("records num error!", search_map)
+            return {}
+        retval["abstract"] = records[0]["abstract"]
+        retval["quick_read"] = records[0]["quick_read"]
+        retval["labels"] = records[0]["labels"]
+        retval["modality"] = records[0]["modality"]
         return retval
 
     def readSqlite(self, fileid=None, labels=None, modality=None):
@@ -87,8 +91,8 @@ class Controller:
         datas = []
         nodes = self.vec_db.search(query)
         for node in nodes:
-            info = self.get_node_info(node)
-            datas.append(info)     
+            info = self.gen_node_info(node)
+            datas.append(info)
         return datas
 
     def call_llm(self, content):
