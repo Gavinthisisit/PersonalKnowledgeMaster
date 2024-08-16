@@ -40,6 +40,8 @@ class FileLoader:
         # self.kb_id = kb_id
         self.file_id = gen_file_id(user_id, file_name)
         self.docs: List[Document] = []
+        self.content = ""
+        self.title = ""
         self.file_path = file_name
         self.url = ""
         if is_url:
@@ -50,7 +52,8 @@ class FileLoader:
                            using_zh_title_enhance=ZH_TITLE_ENHANCE):
         if self.url != "":
             crawler = Crawler(self.url)
-            texts = crawler.crawl()
+            texts, title = crawler.crawl()
+            self.title = title
         elif self.file_path.lower().endswith(".md"):
             pass
         elif self.file_path.lower().endswith(".txt"):
@@ -101,7 +104,10 @@ class FileLoader:
             print("using_zh_title_enhance %s", using_zh_title_enhance)
             docs = zh_title_enhance(docs)
         print(f'success init localfile {self.file_path}')
-        print(texts)
+        # print(texts)
+        self.content = "\n".join(texts)
+        if self.title == "" and self.url == "":
+            self.title = self.get_file_name(self.file_path)
         # 这里开始构造chunk对象
         metadata={'source': self.file_path, 'file_id': self.file_id, 'user_id': self.user_id, 'file_name': self.url if self.url else os.path.split(self.file_path)[-1]}
         for t in texts:
@@ -128,6 +134,11 @@ class FileLoader:
             )
             self.docs.append(doc)
         return
+
+    def get_file_name(self, filename):
+        index = filename.rfind("/")
+        clean_filename = filename[index + 1:]
+        return clean_filename
 
 if __name__ == '__main__':
     user_id = "test_userid"
